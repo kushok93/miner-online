@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Сапёр-онлайн</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>💣 Сапёр-онлайн</h1>
+    <div class="players">
+      <span class="player"><i class="dot" id="meDot"></i>Ты: <input id="nameInput" maxlength="16" placeholder="ник"></span>
+      <span class="player" id="partnerBox"><i class="dot" id="partnerDot"></i><span id="partnerName">Напарника нет</span></span>
+    </div>
+  </header>
+
+  <section class="room">
+    <span class="net" id="netStatus" data-kind="connecting">Подключение…</span>
+    <div class="invite" id="invite" hidden>
+      <input id="inviteLink" readonly>
+      <button id="copyBtn">Скопировать ссылку</button>
+    </div>
+    <button id="soloBtn" hidden>Создать свою игру</button>
+  </section>
+
+  <main class="panel">
+    <div class="controls">
+      <select id="level" title="Сложность"></select>
+      <button id="flagMode" class="toggle" title="Режим флажков (удобно на телефоне)">🚩 Флажки</button>
+    </div>
+    <div class="hud">
+      <div class="lcd" id="minesLeft">010</div>
+      <button id="face" class="face" title="Новая игра">🙂</button>
+      <div class="lcd" id="timer">000</div>
+    </div>
+    <div class="scroller">
+      <div class="board-wrap" id="boardWrap">
+        <div class="board" id="board"></div>
+        <div class="partner-cursor" id="partnerCursor" hidden>
+          <div class="detector" id="partnerDetector"></div>
+          <span class="tag" id="partnerTag"></span>
+        </div>
+      </div>
+    </div>
+    <div class="message" id="message"></div>
+  </main>
+
+  <p class="help">
+    ЛКМ — открыть, ПКМ — флажок, клик по цифре — открыть соседей.
+    На телефоне: тап — открыть, долгое нажатие или режим «🚩» — флажок.
+    Ходите одновременно, очереди нет. Одна мина — проигрыш для обоих!
+  </p>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="game.js"></script>
+  <script src="net.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
