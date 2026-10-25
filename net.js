@@ -62,7 +62,11 @@ class Net {
           this.host(randomCode());
         }
       } else if (err.type !== 'peer-unavailable') {
-        this.h.onStatus('error', 'Ошибка сети: ' + err.type);
+        this.h.onStatus('error', 'Ошибка сети: ' + err.type + ' — пробуем ещё раз…');
+        // Фатальные ошибки сервера уничтожают peer — создаём заново
+        setTimeout(() => {
+          if (this.peer === peer && peer.destroyed) this.host(code);
+        }, 3000);
       }
     });
   }
@@ -72,7 +76,11 @@ class Net {
     this.code = code;
     this.h.onRoom(code);
     this.h.onStatus('connecting', 'Подключение к серверу…');
-    const peer = new Peer({ debug: 1 });
+    clearTimeout(this.retryTimer);
+    if (this.peer && !this.peer.destroyed) this.peer.destroy();
+    // Свой id задаём сами: без него PeerJS отдельно запрашивает id у сервера,
+    // и этот запрос бывает причиной «server-error»
+    const peer = new Peer(PEER_PREFIX + 'g-' + randomCode() + randomCode(), { debug: 1 });
     this.peer = peer;
 
     peer.on('open', () => this.connectToHost());
@@ -80,18 +88,25 @@ class Net {
       if (!peer.destroyed) setTimeout(() => !peer.destroyed && peer.reconnect(), 1500);
     });
     peer.on('error', err => {
+      if (this.peer !== peer) return;
       if (err.type === 'peer-unavailable') {
         this.h.onStatus('notfound', 'Комната не найдена — ждём хоста…');
         this.scheduleRetry(3000);
       } else {
-        this.h.onStatus('error', 'Ошибка сети: ' + err.type);
-        this.scheduleRetry(4000);
+        this.h.onStatus('error', 'Ошибка сети: ' + err.type + ' — пробуем ещё раз…');
+        clearTimeout(this.retryTimer);
+        this.retryTimer = setTimeout(() => {
+          if (this.isOpen()) return;
+          if (peer.destroyed || err.type === 'unavailable-id') this.join(code);
+          else this.connectToHost();
+        }, 3000);
       }
     });
   }
 
   connectToHost() {
-    if (!this.peer || this.peer.destroyed || this.isOpen()) return;
+    if (!this.peer || this.isOpen()) return;
+    if (this.peer.destroyed) { this.join(this.code); return; }
     if (this.peer.disconnected) {
       this.peer.reconnect();
       this.scheduleRetry(2000);
